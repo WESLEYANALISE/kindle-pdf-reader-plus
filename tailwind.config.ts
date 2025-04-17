@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,10 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				reader: {
+					highlight: '#FEF7CD',
+					page: '#F8F8F8',
 				}
 			},
 			borderRadius: {
@@ -84,11 +89,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'page-turn': {
+					'0%': { transform: 'rotateY(0deg)' },
+					'100%': { transform: 'rotateY(-10deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'page-turn': 'page-turn 0.5s ease-out forwards'
 			}
 		}
 	},
