@@ -1,5 +1,11 @@
 
 import { useState, useEffect } from 'react';
+import * as pdfjs from 'pdfjs-dist';
+
+export interface PageContent {
+  text: string;
+  images: string[];
+}
 
 export interface PDFReaderState {
   pdfFile: File | null;
@@ -7,10 +13,12 @@ export interface PDFReaderState {
   currentPage: number;
   numPages: number;
   scale: number;
-  fontSize: 'sm' | 'md' | 'lg' | 'xl';
+  fontSize: 'md' | 'lg' | 'xl' | '2xl';
   isDarkMode: boolean;
   highlights: { page: number; text: string; rects: DOMRect[] }[];
   bookmarks: number[];
+  pageContents: Record<number, PageContent>;
+  isPageTurning: boolean;
 }
 
 const initialState: PDFReaderState = {
@@ -19,11 +27,16 @@ const initialState: PDFReaderState = {
   currentPage: 1,
   numPages: 0,
   scale: 1.0,
-  fontSize: 'md',
+  fontSize: 'xl',
   isDarkMode: false,
   highlights: [],
   bookmarks: [],
+  pageContents: {},
+  isPageTurning: false,
 };
+
+// Configure the worker source
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 export const usePDFReader = () => {
   const [state, setState] = useState<PDFReaderState>(initialState);
@@ -43,7 +56,8 @@ export const usePDFReader = () => {
       pdfUrl: fileUrl,
       currentPage: 1,
       highlights: [],
-      bookmarks: []
+      bookmarks: [],
+      pageContents: {},
     }));
   };
 
@@ -55,33 +69,69 @@ export const usePDFReader = () => {
     }));
   };
 
-  // Navigate to a specific page
-  const goToPage = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= state.numPages) {
+  // Extract text and images from the PDF
+  const extractPageContent = async (pageNumber: number) => {
+    if (!state.pdfUrl) return;
+
+    try {
+      const loadingTask = pdfjs.getDocument(state.pdfUrl);
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(pageNumber);
+      
+      // Extract text
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item: any) => 'str' in item ? item.str : '')
+        .join(' ');
+      
+      // For images, we would normally use the render context
+      // This is simplified - in a real app you'd extract each image
+      const images: string[] = [];
+      
       setState(prev => ({
         ...prev,
-        currentPage: pageNumber
+        pageContents: {
+          ...prev.pageContents,
+          [pageNumber]: { text, images }
+        }
       }));
+      
+      return { text, images };
+    } catch (error) {
+      console.error('Error extracting content:', error);
+      return { text: '', images: [] };
+    }
+  };
+
+  // Navigate to a specific page with animation
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= state.numPages && pageNumber !== state.currentPage) {
+      setState(prev => ({
+        ...prev,
+        isPageTurning: true
+      }));
+      
+      setTimeout(() => {
+        setState(prev => ({
+          ...prev,
+          currentPage: pageNumber,
+          isPageTurning: false
+        }));
+      }, 500); // Duration of the animation
     }
   };
 
   // Navigate to next page
   const nextPage = () => {
     if (state.currentPage < state.numPages) {
-      setState(prev => ({
-        ...prev,
-        currentPage: prev.currentPage + 1
-      }));
+      goToPage(state.currentPage + 1);
     }
   };
 
   // Navigate to previous page
   const prevPage = () => {
     if (state.currentPage > 1) {
-      setState(prev => ({
-        ...prev,
-        currentPage: prev.currentPage - 1
-      }));
+      goToPage(state.currentPage - 1);
     }
   };
 
@@ -109,7 +159,7 @@ export const usePDFReader = () => {
   };
 
   // Change font size
-  const changeFontSize = (size: 'sm' | 'md' | 'lg' | 'xl') => {
+  const changeFontSize = (size: 'md' | 'lg' | 'xl' | '2xl') => {
     setState(prev => ({
       ...prev,
       fontSize: size
@@ -138,6 +188,13 @@ export const usePDFReader = () => {
     });
   };
 
+  // Load page content when current page changes
+  useEffect(() => {
+    if (state.pdfUrl && state.currentPage && !state.pageContents[state.currentPage]) {
+      extractPageContent(state.currentPage);
+    }
+  }, [state.pdfUrl, state.currentPage]);
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
@@ -158,6 +215,7 @@ export const usePDFReader = () => {
     toggleDarkMode,
     changeFontSize,
     addHighlight,
-    toggleBookmark
+    toggleBookmark,
+    extractPageContent
   };
 };

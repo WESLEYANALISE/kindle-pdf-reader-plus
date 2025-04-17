@@ -1,14 +1,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { 
   ChevronLeft, 
   ChevronRight, 
   Moon, 
   Sun, 
   ZoomIn, 
-  ZoomOut, 
+  ZoomOut,
   BookOpen,
   Bookmark,
   TextSelect,
@@ -27,14 +26,14 @@ interface ReadingControlsProps {
   currentPage: number;
   numPages: number;
   scale: number;
-  fontSize: string;
+  fontSize: 'md' | 'lg' | 'xl' | '2xl';
   isDarkMode: boolean;
   bookmarks: number[];
   onPrevPage: () => void;
   onNextPage: () => void;
   onZoom: (delta: number) => void;
   onToggleDarkMode: () => void;
-  onChangeFontSize: (size: 'sm' | 'md' | 'lg' | 'xl') => void;
+  onChangeFontSize: (size: 'md' | 'lg' | 'xl' | '2xl') => void;
   onToggleBookmark: (page: number) => void;
   onGoToPage: (page: number) => void;
 }
@@ -63,86 +62,93 @@ const ReadingControls: React.FC<ReadingControlsProps> = ({
     }
   };
 
+  const fontSizeNames = {
+    'md': 'Médio',
+    'lg': 'Grande',
+    'xl': 'Extra Grande',
+    '2xl': 'Máximo'
+  };
+
   return (
-    <div className="flex flex-col space-y-4">
-      {/* Top Controls */}
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={onToggleDarkMode} 
-            title={isDarkMode ? "Modo claro" : "Modo escuro"}
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+      <div className="flex space-x-2 bg-white dark:bg-gray-800 rounded-full shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onToggleDarkMode} 
+          title={isDarkMode ? "Modo claro" : "Modo escuro"}
+          className="rounded-full"
+        >
+          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" title="Tamanho da fonte">
-                <Type className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => onChangeFontSize('sm')}>
-                  <span className={fontSize === 'sm' ? 'font-bold' : ''}>Pequeno</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <Type className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="center">
+            <DropdownMenuGroup>
+              {(['md', 'lg', 'xl', '2xl'] as const).map(size => (
+                <DropdownMenuItem 
+                  key={size} 
+                  onClick={() => onChangeFontSize(size)}
+                  className={fontSize === size ? 'bg-secondary' : ''}
+                >
+                  {fontSizeNames[size]}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onChangeFontSize('md')}>
-                  <span className={fontSize === 'md' ? 'font-bold' : ''}>Médio</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onChangeFontSize('lg')}>
-                  <span className={fontSize === 'lg' ? 'font-bold' : ''}>Grande</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onChangeFontSize('xl')}>
-                  <span className={fontSize === 'xl' ? 'font-bold' : ''}>Extra grande</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <Button 
-            variant={isBookmarked ? "default" : "outline"} 
-            size="icon" 
-            onClick={() => onToggleBookmark(currentPage)}
-            title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
-          >
-            <Bookmark className="h-4 w-4" />
-          </Button>
-          
-          <Button variant="outline" size="icon" title="Destacar texto">
-            <TextSelect className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button 
+          variant={isBookmarked ? "default" : "ghost"}
+          size="icon" 
+          onClick={() => onToggleBookmark(currentPage)}
+          className="rounded-full"
+        >
+          <Bookmark className="h-4 w-4" />
+        </Button>
 
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" onClick={() => onZoom(-0.1)} title="Diminuir zoom">
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          
-          <span className="text-sm font-medium w-12 text-center">
-            {Math.round(scale * 100)}%
-          </span>
-          
-          <Button variant="outline" size="icon" onClick={() => onZoom(0.1)} title="Aumentar zoom">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+        <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
 
-      {/* Page Navigation */}
-      <div className="page-controls">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onZoom(-0.1)} 
+          className="rounded-full"
+        >
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        
+        <span className="flex items-center justify-center w-12 text-sm">
+          {Math.round(scale * 100)}%
+        </span>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => onZoom(0.1)}
+          className="rounded-full"
+        >
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+
+        <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={onPrevPage} 
           disabled={currentPage <= 1}
-          title="Página anterior"
+          className="rounded-full"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </Button>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           <input
             type="number"
             min={1}
@@ -152,7 +158,7 @@ const ReadingControls: React.FC<ReadingControlsProps> = ({
             className="w-12 h-8 text-center rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700"
           />
           <span className="text-sm whitespace-nowrap">
-            de {numPages}
+            / {numPages}
           </span>
         </div>
 
@@ -161,31 +167,33 @@ const ReadingControls: React.FC<ReadingControlsProps> = ({
           size="icon" 
           onClick={onNextPage} 
           disabled={currentPage >= numPages}
-          title="Próxima página"
+          className="rounded-full"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
-      
+
       {/* Bookmarks dropdown */}
       {bookmarks.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <BookOpen className="h-4 w-4" />
-              <span>Marcadores</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuGroup>
-              {bookmarks.sort((a, b) => a - b).map((page) => (
-                <DropdownMenuItem key={page} onClick={() => onGoToPage(page)}>
-                  Página {page}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="absolute right-0 bottom-14">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                <BookOpen className="h-4 w-4" />
+                <span>Marcadores</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                {bookmarks.sort((a, b) => a - b).map((page) => (
+                  <DropdownMenuItem key={page} onClick={() => onGoToPage(page)}>
+                    Página {page}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
     </div>
   );
